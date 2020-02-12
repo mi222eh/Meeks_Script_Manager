@@ -24,7 +24,38 @@ export async function executeScript (context:ScriptManagerContext, name:string) 
     console.log(result.output);
     console.warn(result.error);
 }
+export async function executeGroupScript (context:ScriptManagerContext, name:string) {
+    const groupItem = context.state.groupList.find(group => group.group.name === name);
+    if(!groupItem){
+        throw 'Could not find Group';
+    }
+    for (const script of groupItem.group.scripts) {
+        const scriptItem = context.state.scriptList.find(scriptItem => scriptItem.script.name === script);
+        if(!scriptItem){
+            throw 'Could not find script';
+        }
+        const process = executor.runProcess({
+            command: scriptItem.script.command,
+            cwd: scriptItem.script.cwd
+        });
+        process.process.stdout.on('data', (chunk) => {
+            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
+                name,
+                row: chunk
+            });
+        })
+        const result = await process.promise();
+        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
+            name,
+            row: result.output
+        });
+        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
+            name,
+            row: result.error
+        });
+    }
 
+}
 export async function addScript(){
 
 }

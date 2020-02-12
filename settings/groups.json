@@ -1,5 +1,5 @@
 [{
-    "name": "Publish Buster75",
+    "name": "Publish_Buster75",
     "scripts": ["install_gulp", "install_bundler", "publish_buster"],
     "title": "Publish Buster75 Entire Chain"
 }]

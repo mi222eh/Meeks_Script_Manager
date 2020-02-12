@@ -22,6 +22,12 @@
                     label="Run"
                     v-on:click="() => runGroup(group.scripts)"
                 />
+                <q-btn
+                    flat
+                    color="primary"
+                    label="View"
+                    v-on:click="() => gotoGroup(group.name)"
+                />
             </q-card-actions>
         </q-card>
     </q-page>
@@ -42,6 +48,9 @@ export default Vue.extend({
                     console.error(e);
                 }
             }
+        },
+        gotoGroup(name:string){
+            this.$router.push(`groups/view/${name}`)
         }
     }
 });

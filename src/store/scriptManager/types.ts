@@ -1,7 +1,11 @@
 export enum ScriptManagerCommitTypes{
     ADD_LOG= 'addLog',
     SET_SCRIPTS = 'setScripts',
-    SET_GROUPS = 'setGroups'
+    SET_GROUPS = 'setGroups',
+    CLEAR_GROUP_LOG = 'clearGroupLog',
+    CLEAR_SCRIPT_LOG = 'clearScriptLog',
+    ADD_ROW_TO_GROUP_LOG = 'addRowToGroupLog',
+    ADD_ROW_TO_SCRIPT_LOG = 'addRowToScriptLog'
 }
 export enum ScriptManagerActionTypes{
     EXECUTE_SCRIPT = 'executeScript'

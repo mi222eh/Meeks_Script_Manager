@@ -14,7 +14,7 @@
                     Script Manager
                 </q-toolbar-title>
 
-                <div>App version {{ $q.version }}</div>
+                <div>{{ $q.version }}</div>
             </q-toolbar>
         </q-header>
 
@@ -28,8 +28,12 @@
                 <q-item-label header class="text-grey-8">
                     Pages
                 </q-item-label>
-                <q-btn to="/scripts" label="Script List"/>
-                <q-btn to="/groups" label="Script Group List"/>
+                <q-item>
+                    <q-btn to="/scripts" label="Script List" />
+                </q-item>
+                <q-item>
+                    <q-btn to="/groups" label="Script Group List" />
+                </q-item>
             </q-list>
         </q-drawer>
 
