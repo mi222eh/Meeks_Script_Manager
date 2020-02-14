@@ -66,3 +66,12 @@ export function setGroupScript(state: ScriptManagerState, payload: {name:string,
     }
     group.group.scripts = payload.scripts;
 }
+
+export function updateGroup(state: ScriptManagerState, payload:ScriptGroupObject){
+    const group = state.groupList.find(groupItem => groupItem.group.name === payload.name);
+    if(!group){
+        throw 'Could not find group';
+    }
+    group.group.scripts = payload.scripts;
+    group.group.title = payload.title;
+}

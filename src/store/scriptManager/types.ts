@@ -7,7 +7,8 @@ export enum ScriptManagerCommitTypes{
     ADD_ROW_TO_GROUP_LOG = 'addRowToGroupLog',
     ADD_ROW_TO_SCRIPT_LOG = 'addRowToScriptLog',
     SET_SCRIPTS_TO_GROUP = 'setGroupScript',
-    ADD_SCRIPT = 'addScript'
+    ADD_SCRIPT = 'addScript',
+    UPDATE_GROUP = 'updateGroup'
 }
 export enum ScriptManagerActionTypes{
     EXECUTE_SCRIPT = 'executeScript',
@@ -15,7 +16,7 @@ export enum ScriptManagerActionTypes{
     UPDATE_SCRIPT = 'updateScript',
     UPDATE_GROUP = 'updateGroup',
     LOAD_SCRIPTS = 'loadScripts',
-    CREATE_SSCRIPT = 'createScript'
+    CREATE_SCRIPT = 'createScript'
 }
 
 export interface ScriptObjectContainer{

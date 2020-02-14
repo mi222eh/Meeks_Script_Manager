@@ -1,6 +1,6 @@
 import './state';
 import * as executor from '../components/scriptExecutor';
-import { ScriptManagerContext, ScriptManagerCommitTypes, ScriptObject, ScriptObjectContainer } from './types';
+import { ScriptManagerContext, ScriptManagerCommitTypes, ScriptObject, ScriptObjectContainer, ScriptGroupObject } from './types';
 import {getScripts, getGroups, saveGroups, saveScripts} from './DAL'; 
 
 
@@ -57,12 +57,13 @@ export async function executeGroupScript (context:ScriptManagerContext, name:str
 
 }
 
-export async function updateScript(){
-
+export async function updateScript(context:ScriptManagerContext, payload:ScriptObject){
+    context.commit(ScriptManagerCommitTypes.ADD_SCRIPT, payload);
+    saveScripts(context.state.scriptList.map(script => script.script));
 }
 
-export async function updateGroup(context: ScriptManagerContext, payload: {name:string, scripts:string[], title:string}){
-    context.commit(ScriptManagerCommitTypes.SET_SCRIPTS_TO_GROUP, {name: payload.name, scripts: payload.scripts});
+export async function updateGroup(context: ScriptManagerContext, payload: ScriptGroupObject){
+    context.commit(ScriptManagerCommitTypes.UPDATE_GROUP, payload);
     saveGroups(context.state.groupList.map(gI => gI.group));
 }
 

@@ -11,17 +11,20 @@
         >
             <q-card-section>
                 <!-- <div class="text-overline text-orange-9">Build Buster75</div> -->
-                <div class="text-h5 q-mt-sm q-mb-xs">{{ script.title }}</div>
-                <div class="text-caption text-grey"></div>
-                <div class="text-caption text-grey"></div>
+                <div class="text-h5 q-ml-xs">{{ script.title }}</div>
             </q-card-section>
 
-            <q-card-actions class="flex flex-end">
+            <q-card-actions class="q-ml-md">
                 <q-btn
-                    flat
                     color="primary"
                     label="Run"
                     v-on:click="() => runCommand(script)"
+                />
+                <q-btn
+                    flat
+                    color="primary"
+                    label="View"
+                    v-on:click="() => gotoScript(script.name)"
                 />
             </q-card-actions>
         </q-card>
@@ -38,6 +41,9 @@ export default Vue.extend({
             } catch (e) {
                 console.error(e);
             }
+        },
+        gotoScript(name:string){
+            this.$router.push(`/scripts/view/${name}`);
         }
     }
 });

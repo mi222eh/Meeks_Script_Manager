@@ -11,24 +11,32 @@
             </template>
         </q-banner>
         <div class="" v-else>
-            <q-input
-                square
-                outlined
-                v-model="groupContainer.group.title"
-                @change="saveGroupScripts"
-                label="Title"
-            />
+            <q-form>
+                <q-input
+                    square
+                    outlined
+                    v-model="groupContainer.group.title"
+                    @change="saveGroupScripts"
+                    label="Title"
+                />
+                <q-input
+                    square
+                    outlined
+                    v-model="groupContainer.group.name"
+                    disable
+                    label="Name"
+                />
+            </q-form>
 
             <div class="buttons">
                 <q-btn
-                    color="white"
-                    text-color="black"
+                    color="primary"
                     label="Run"
                     v-on:click="() => execute(groupContainer.group.name)"
                 />
                 <q-btn
-                    color="white"
-                    text-color="black"
+                    flat
+                    color="primary"
                     label="View Scripts"
                     v-on:click="() => (showScripts = true)"
                 />
@@ -102,11 +110,16 @@ export default Vue.extend({
             if (!this.groupContainer) {
                 return;
             }
-            this.$store.dispatch('scriptManager/' + ScriptManagerActionTypes.UPDATE_GROUP, {
-                name: this.groupContainer.group.name,
-                scripts: this.scriptContainerList.map(scr => scr.script.name),
-                title: this.groupContainer.group.title
-            });
+            this.$store.dispatch(
+                'scriptManager/' + ScriptManagerActionTypes.UPDATE_GROUP,
+                {
+                    name: this.groupContainer.group.name,
+                    scripts: this.scriptContainerList.map(
+                        scr => scr.script.name
+                    ),
+                    title: this.groupContainer.group.title
+                }
+            );
         }
     },
     mounted() {
@@ -157,7 +170,7 @@ export default Vue.extend({
     height: calc(100% - 222px);
     #Console {
         border: 1px black solid;
-        height: calc(100vh - 11rem);
+        height: calc(100vh - 15rem);
         overflow: auto;
     }
 }

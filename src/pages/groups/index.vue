@@ -17,7 +17,6 @@
 
             <q-card-actions class="flex flex-end">
                 <q-btn
-                    flat
                     color="primary"
                     label="Run"
                     v-on:click="() => runGroup(group.scripts)"

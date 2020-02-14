@@ -9,12 +9,31 @@ export function getAllGroups (state: ScriptManagerState) {
 }
 export function getGroupByName(state: ScriptManagerState){
     return function(name:string){
-        return getCopy(state.groupList.find(group => group.group.name === name));
+        return state.groupList.find(group => group.group.name === name);
     }
 }
+export function getScriptCopyByName(state: ScriptManagerState){
+    return function(name:string){
+        const script = state.scriptList.find(item => item.script.name === name);
+        if(!script){
+            throw 'Cannot find script';
+        }
+        return getCopy(script.script);
+    }
+}
+
 export function getScriptByName(state: ScriptManagerState){
     return function(name:string){
-        return getCopy(state.scriptList.find(item => item.script.name === name));
+        return state.scriptList.find(item => item.script.name === name);
+    }
+}
+export function getGroupCopyByName(state: ScriptManagerState){
+    return function(name:string){
+        const group = state.groupList.find(group => group.group.name === name)
+        if(!group){
+            throw 'Cannot find group';
+        }
+        return getCopy(group.group);
     }
 }
 
