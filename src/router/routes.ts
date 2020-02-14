@@ -17,6 +17,10 @@ const routes: RouteConfig[] = [
                 component: () => import('pages/scripts/view.vue')
             },
             {
+                path:'scripts/create',
+                component: () => import('pages/scripts/create.vue')
+            },
+            {
                 path:'groups',
                 component: () => import('pages/groups/index.vue')
             },

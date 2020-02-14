@@ -1,5 +1,5 @@
 import './state'
-import { ScriptManagerState, ScriptObject, ScriptGroupObject} from './types';
+import { ScriptManagerState, ScriptObject, ScriptGroupObject, ScriptObjectContainer} from './types';
 
 export function clearGroupLog(state: ScriptManagerState, payload:{name:string}){
     const script = state.groupList.find(group => group.group.name === payload.name);
@@ -33,6 +33,14 @@ export function addRowToScriptLog (state: ScriptManagerState, payload:{name:stri
     script.log.push(payload.row)
 }
 
+export function addScript(state: ScriptManagerState, script: ScriptObject){
+    const container:ScriptObjectContainer = {
+        log: [],
+        script: script
+    }
+    state.scriptList.push(container);
+}
+
 export function setScripts(state: ScriptManagerState, scripts: ScriptObject[]){
     state.scriptList = scripts.map(script => {
         return{
@@ -49,4 +57,12 @@ export function setGroups(state: ScriptManagerState, groups: ScriptGroupObject[]
             group
         }
     })
+}
+
+export function setGroupScript(state: ScriptManagerState, payload: {name:string, scripts:string[]}){
+    const group = state.groupList.find(groupItem => groupItem.group.name === payload.name);
+    if(!group){
+        throw 'Could not find group';
+    }
+    group.group.scripts = payload.scripts;
 }

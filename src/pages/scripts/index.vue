@@ -1,5 +1,6 @@
 <template>
-    <q-page>
+    <q-page class="q-pa-md">
+        <q-btn to="scripts/create" label="Create new script" glossy="" color="primary"></q-btn>
         <q-card
             class="q-ma-md my-card"
             bordered

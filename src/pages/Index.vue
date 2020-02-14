@@ -1,6 +1,7 @@
 <template>
-    <div class="flex">
-    </div>
+    <q-page class="q-pa-md">
+
+    </q-page>
 </template>
 
 <script lang="ts">

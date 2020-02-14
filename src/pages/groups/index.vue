@@ -1,5 +1,5 @@
 <template>
-    <q-page>
+    <q-page class="q-pa-md">
         <q-card
             class="q-ma-md my-card"
             bordered

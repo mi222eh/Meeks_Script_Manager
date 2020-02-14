@@ -5,16 +5,22 @@ export enum ScriptManagerCommitTypes{
     CLEAR_GROUP_LOG = 'clearGroupLog',
     CLEAR_SCRIPT_LOG = 'clearScriptLog',
     ADD_ROW_TO_GROUP_LOG = 'addRowToGroupLog',
-    ADD_ROW_TO_SCRIPT_LOG = 'addRowToScriptLog'
+    ADD_ROW_TO_SCRIPT_LOG = 'addRowToScriptLog',
+    SET_SCRIPTS_TO_GROUP = 'setGroupScript',
+    ADD_SCRIPT = 'addScript'
 }
 export enum ScriptManagerActionTypes{
-    EXECUTE_SCRIPT = 'executeScript'
+    EXECUTE_SCRIPT = 'executeScript',
+    EXECUTE_GROUP = 'executeGroupScript',
+    UPDATE_SCRIPT = 'updateScript',
+    UPDATE_GROUP = 'updateGroup',
+    LOAD_SCRIPTS = 'loadScripts',
+    CREATE_SSCRIPT = 'createScript'
 }
 
 export interface ScriptObjectContainer{
     log: string[],
     script: ScriptObject,
-
 }
 
 export interface ScriptObject{
