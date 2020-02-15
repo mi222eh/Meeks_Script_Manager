@@ -36,7 +36,8 @@ export function addRowToScriptLog (state: ScriptManagerState, payload:{name:stri
 export function addScript(state: ScriptManagerState, script: ScriptObject){
     const container:ScriptObjectContainer = {
         log: [],
-        script: script
+        script: script,
+        isRunning: false
     }
     state.scriptList.push(container);
 }
@@ -45,11 +46,18 @@ export function setScripts(state: ScriptManagerState, scripts: ScriptObject[]){
     state.scriptList = scripts.map(script => {
         return{
             log:[],
-            script
+            script,
+            isRunning: false
         }
     });
 }
-
+export function updateScript(state: ScriptManagerState, payload:ScriptObject){
+    const script = state.scriptList.find(scriptItem => scriptItem.script.name === payload.name);
+    if(!script){
+        throw 'Could not find script';
+    }
+    script.script = payload;
+}
 export function setGroups(state: ScriptManagerState, groups: ScriptGroupObject[]){
     state.groupList = groups.map(group => {
         return{

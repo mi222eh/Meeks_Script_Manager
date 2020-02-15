@@ -21,13 +21,6 @@
             <q-input
                 square
                 outlined
-                v-model="scriptContainer.script.name"
-                disable
-                label="Name"
-            />
-            <q-input
-                square
-                outlined
                 v-model="scriptContainer.script.command"
                 disable
                 label="Command"
@@ -42,20 +35,28 @@
 
             <div class="buttons">
                 <q-btn
-                    color="white"
-                    text-color="black"
+                    class="q-mr-md"
+                    color="primary"
                     label="Run"
+                    :loading="scriptContainer.isRunning"
                     v-on:click="() => execute(scriptContainer.script.name)"
                 />
                 <q-btn
-                    color="white"
-                    text-color="black"
+                    class="q-mr-md"
+                    color="secondary"
                     label="Edit Script"
-                    v-on:click="() => (showScripts = true)"
+                    v-on:click="openScriptEdit"
+                />
+                <q-btn
+                    class="q-mr-md"
+                    flat
+                    color="primary"
+                    label="back to list"
+                    to="/scripts"
                 />
             </div>
 
-            <div id="Console">
+            <div id="Console" ref="console">
                 <div
                     v-for="(log, index) in scriptContainer.log"
                     :key="`log${index}`"
@@ -63,18 +64,58 @@
                     {{ log }}
                 </div>
             </div>
-            <q-dialog v-model="showScripts" persistent>
-                <q-card style="min-width: 350px">
-                    <q-card-section>
-                        <div class="text-h6">Script</div>
-                    </q-card-section>
+            <q-dialog v-model="editorOpen" persistent v-if="scriptToEdit">
+                <q-card style="min-width: 80vw">
+                    <q-form @submit="saveScript">
+                        <q-card-section>
+                            <div class="text-h6">Edit</div>
+                        </q-card-section>
 
-                    <q-card-section class="q-pt-none">
-                    </q-card-section>
+                        <q-card-section class="q-pt-none">
+                            <q-input
+                                square
+                                outlined
+                                v-model="scriptToEdit.name"
+                                label="Name (used as id)"
+                                disable
+                            />
+                            <q-input
+                                square
+                                outlined
+                                v-model="scriptToEdit.title"
+                                label="Title"
+                                :rules="[
+                                    value => value.length > 0 || 'Enter a title'
+                                ]"
+                            />
+                            <q-input
+                                square
+                                outlined
+                                v-model="scriptToEdit.command"
+                                label="Command"
+                                :rules="[
+                                    value =>
+                                        value.length > 0 || 'Enter a command'
+                                ]"
+                            />
+                            <q-input
+                                square
+                                outlined
+                                v-model="scriptToEdit.cwd"
+                                label="CWD(Current Working Directory)"
+                            />
+                        </q-card-section>
 
-                    <q-card-actions align="right" class="text-primary">
-                        <q-btn flat label="Close" v-close-popup />
-                    </q-card-actions>
+                        <q-card-actions align="right" class="text-primary">
+                            <q-btn
+                                label="Save"
+                                type="submit"
+                                color="primary"
+                                glossy
+                            />
+                            <q-btn flat label="Close" v-close-popup />
+                        </q-card-actions>
+                    </q-form>
                 </q-card>
             </q-dialog>
         </div>
@@ -88,14 +129,42 @@ import {
     ScriptGroupObjectContainer,
     ScriptObjectContainer,
     ScriptManagerCommitTypes,
-    ScriptManagerActionTypes
+    ScriptManagerActionTypes,
+    ScriptObject
 } from '../../store/scriptManager/types';
 export default Vue.extend({
     methods: {
         execute(name: string) {
             this.$store.dispatch('scriptManager/executeScript', name);
         },
-        saveScript() {}
+        async saveScript() {
+
+            if (!this.scriptToEdit) {
+                return;
+            }
+            await this.$store.dispatch(
+                'scriptManager/updateScript',
+                this.scriptToEdit
+            );
+            this.editorOpen = false;
+        },
+        scrollConsoleToBot(){
+
+        },
+        openScriptEdit() {
+            this.scriptToEdit = null;
+            if (!this.scriptContainer) {
+                return;
+            }
+            const script: ScriptObject = this.$store.getters[
+                'scriptManager/getScriptCopyByName'
+            ](this.scriptContainer.script.name);
+            if (!script) {
+                return;
+            }
+            this.scriptToEdit = script;
+            this.editorOpen = true;
+        }
     },
     mounted() {
         const { name } = this.$route.params;
@@ -108,27 +177,41 @@ export default Vue.extend({
             return;
         }
         this.scriptContainer = script;
-        this.$watch(
-            () => {
-                if (!this.scriptContainer) {
-                    return;
-                }
-                return this.scriptContainer.log;
-            },
-            () => {
-                const console = this.$el.querySelector('#Console');
-                if (!console) {
-                    return;
-                }
-                console.scrollTop = console.scrollHeight;
-            }
-        );
+        // this.$watch(
+        //     () => {
+        //         if (!this.scriptContainer) {
+        //             return;
+        //         }
+        //         return this.scriptContainer.log;
+        //     },
+        //     () => {
+        //         const console = this.$el.querySelector('#Console');
+        //         if (!console) {
+        //             return;
+        //         }
+        //         console.scrollTop = console.scrollHeight;
+        //     }
+        // );
+    },
+    created(){
+
+    },
+    updated(){
+        const consoleElement = this.$el.querySelector('#Console');
+        if (!consoleElement) {
+            return;
+        }
+        consoleElement.scrollTop = consoleElement.scrollHeight;
     },
     data() {
         const data: {
             scriptContainer: ScriptObjectContainer | null;
+            scriptToEdit: ScriptObject | null;
+            editorOpen: boolean;
         } = {
-            scriptContainer: null
+            scriptContainer: null,
+            scriptToEdit: null,
+            editorOpen: false
         };
         return data;
     }
@@ -142,7 +225,7 @@ export default Vue.extend({
     height: calc(100% - 222px);
     #Console {
         border: 1px black solid;
-        height: calc(100vh - 22rem);
+        height: calc(100vh - 18rem);
         overflow: auto;
     }
 }

@@ -10,19 +10,17 @@ export async function executeScript (context:ScriptManagerContext, name:string) 
     if(!scriptItem){
         throw 'Could not find script';
     }
+    context.commit(ScriptManagerCommitTypes.CLEAR_SCRIPT_LOG, {name:scriptItem.script.name});
     const process = executor.runProcess({
         command: scriptItem.script.command,
         cwd: scriptItem.script.cwd
     });
     process.process.stdout.on('data', (chunk) => {
-        console.log(chunk);
+        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {name: scriptItem.script.name, row:chunk});
     })
-    process.process.on('message', (message) => {
-        console.log(message);
-    });
     const result = await process.promise();
-    console.log(result.output);
-    console.warn(result.error);
+    context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {name: scriptItem.script.name, row:result.error});
+    context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {name: scriptItem.script.name, row:result.output});
 }
 export async function executeGroupScript (context:ScriptManagerContext, name:string) {
     const groupItem = context.state.groupList.find(group => group.group.name === name);
@@ -58,13 +56,15 @@ export async function executeGroupScript (context:ScriptManagerContext, name:str
 }
 
 export async function updateScript(context:ScriptManagerContext, payload:ScriptObject){
-    context.commit(ScriptManagerCommitTypes.ADD_SCRIPT, payload);
-    saveScripts(context.state.scriptList.map(script => script.script));
+    console.log(payload);
+    
+    context.commit(ScriptManagerCommitTypes.UPDATE_SCRIPT, payload);
+    await saveScripts(context.state.scriptList.map(script => script.script));
 }
 
 export async function updateGroup(context: ScriptManagerContext, payload: ScriptGroupObject){
     context.commit(ScriptManagerCommitTypes.UPDATE_GROUP, payload);
-    saveGroups(context.state.groupList.map(gI => gI.group));
+    await saveGroups(context.state.groupList.map(gI => gI.group));
 }
 
 export async function createScript(context: ScriptManagerContext, payload: ScriptObject){

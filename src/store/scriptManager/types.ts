@@ -8,7 +8,8 @@ export enum ScriptManagerCommitTypes{
     ADD_ROW_TO_SCRIPT_LOG = 'addRowToScriptLog',
     SET_SCRIPTS_TO_GROUP = 'setGroupScript',
     ADD_SCRIPT = 'addScript',
-    UPDATE_GROUP = 'updateGroup'
+    UPDATE_GROUP = 'updateGroup',
+    UPDATE_SCRIPT = 'updateScript'
 }
 export enum ScriptManagerActionTypes{
     EXECUTE_SCRIPT = 'executeScript',
@@ -21,6 +22,7 @@ export enum ScriptManagerActionTypes{
 
 export interface ScriptObjectContainer{
     log: string[],
+    isRunning: boolean,
     script: ScriptObject,
 }
 
