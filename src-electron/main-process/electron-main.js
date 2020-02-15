@@ -33,6 +33,7 @@ function createWindow () {
       // preload: path.resolve(__dirname, 'electron-preload.js')
     }
   })
+  mainWindow.setMenu(null);
 
   mainWindow.loadURL(process.env.APP_URL)
 

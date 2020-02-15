@@ -176,7 +176,10 @@ module.exports = function (ctx) {
             builder: {
                 // https://www.electron.build/configuration/configuration
 
-                appId: 'script_manager'
+                appId: 'script_manager',
+                win:{
+                    target:'nsis'
+                }
             },
 
             // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration

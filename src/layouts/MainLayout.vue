@@ -13,8 +13,8 @@
                 <q-toolbar-title>
                     Script Manager
                 </q-toolbar-title>
-
-                <div>{{ $q.version }}</div>
+                <!-- <q-slider v-model="standard" :min="0" :max="50"/> -->
+                <!-- <div>1.0.0</div> -->
             </q-toolbar>
         </q-header>
 
@@ -52,44 +52,6 @@ export default Vue.extend({
     data() {
         return {
             leftDrawerOpen: false,
-            essentialLinks: [
-                {
-                    title: 'Docs',
-                    caption: 'quasar.dev',
-                    icon: 'school',
-                    link: 'https://quasar.dev'
-                },
-                {
-                    title: 'Github',
-                    caption: 'github.com/quasarframework',
-                    icon: 'code',
-                    link: 'https://github.com/quasarframework'
-                },
-                {
-                    title: 'Discord Chat Channel',
-                    caption: 'chat.quasar.dev',
-                    icon: 'chat',
-                    link: 'https://chat.quasar.dev'
-                },
-                {
-                    title: 'Forum',
-                    caption: 'forum.quasar.dev',
-                    icon: 'record_voice_over',
-                    link: 'https://forum.quasar.dev'
-                },
-                {
-                    title: 'Twitter',
-                    caption: '@quasarframework',
-                    icon: 'rss_feed',
-                    link: 'https://twitter.quasar.dev'
-                },
-                {
-                    title: 'Facebook',
-                    caption: '@QuasarFramework',
-                    icon: 'public',
-                    link: 'https://facebook.quasar.dev'
-                }
-            ]
         };
     }
 });

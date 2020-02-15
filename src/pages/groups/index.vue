@@ -35,7 +35,12 @@
                     v-on:click="() => gotoGroup(groupContainer.group.name)"
                 />
 
-                <q-btn class="q-mr-md" flat color="red" label="Delete" v-on:click=" ()=> deleteGroup(groupContainer)"/>
+                <q-btn
+                    flat
+                    color="red"
+                    label="Delete"
+                    v-on:click="() => deleteGroup(groupContainer)"
+                />
             </q-card-actions>
         </q-card>
     </q-page>
@@ -61,7 +66,10 @@ export default Vue.extend({
                     persistent: false
                 })
                 .onOk(() => {
-                    this.$store.dispatch('scriptManager/removeGroup', group.group.name);
+                    this.$store.dispatch(
+                        'scriptManager/removeGroup',
+                        group.group.name
+                    );
                 });
         }
     }

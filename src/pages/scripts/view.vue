@@ -126,10 +126,7 @@
 import Vue from 'vue';
 
 import {
-    ScriptGroupObjectContainer,
     ScriptObjectContainer,
-    ScriptManagerCommitTypes,
-    ScriptManagerActionTypes,
     ScriptObject
 } from '../../store/scriptManager/types';
 export default Vue.extend({
@@ -168,27 +165,11 @@ export default Vue.extend({
         const script: ScriptObjectContainer = this.$store.getters[
             'scriptManager/getScriptByName'
         ](name);
-        console.log(script);
 
         if (!script) {
             return;
         }
         this.scriptContainer = script;
-        // this.$watch(
-        //     () => {
-        //         if (!this.scriptContainer) {
-        //             return;
-        //         }
-        //         return this.scriptContainer.log;
-        //     },
-        //     () => {
-        //         const console = this.$el.querySelector('#Console');
-        //         if (!console) {
-        //             return;
-        //         }
-        //         console.scrollTop = console.scrollHeight;
-        //     }
-        // );
     },
     created(){
 

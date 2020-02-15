@@ -4,5 +4,26 @@
     "rename": true,
     "vscode": true,
     "prettier": true
+  },
+  "@quasar/icon-genie": {
+    "minify_dev": "pngquant",
+    "minify_build": "zopfli",
+    "cordova": {
+      "background_color": "#000074",
+      "splashscreen_type": "pure"
+    },
+    "build_always": true,
+    "__internal": {
+      "dev": {
+        "electron": {
+          "iconHash": "02956f9316c75f03e25b78a408a05ed9"
+        }
+      },
+      "build": {
+        "electron": {
+          "iconHash": "02956f9316c75f03e25b78a408a05ed9"
+        }
+      }
+    }
   }
 }

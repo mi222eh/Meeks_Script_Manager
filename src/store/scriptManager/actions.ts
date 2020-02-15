@@ -116,6 +116,7 @@ export async function removeScript(context: ScriptManagerContext, name:string){
         throw 'Script is running';
     }
     context.commit(ScriptManagerCommitTypes.REMOVE_SCRIPT, {name: scriptItem.script.name});
+    saveScripts(context.state.scriptList.map(x => x.script))
 }
 export async function removeGroup(context: ScriptManagerContext, name:string){
     const groupItem = context.state.groupList.find(group => group.group.name === name);
@@ -126,4 +127,5 @@ export async function removeGroup(context: ScriptManagerContext, name:string){
         throw 'Group is running';
     }
     context.commit(ScriptManagerCommitTypes.REMOVE_GROUP, {name: groupItem.group.name});
+    saveGroups(context.state.groupList.map(x => x.group))
 }
