@@ -148,9 +148,6 @@ export default Vue.extend({
             );
             this.editorOpen = false;
         },
-        scrollConsoleToBot(){
-
-        },
         openScriptEdit() {
             this.scriptToEdit = null;
             if (!this.scriptContainer) {

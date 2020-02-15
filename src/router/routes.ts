@@ -27,7 +27,11 @@ const routes: RouteConfig[] = [
             {
                 path:'groups/view/:name',
                 component: () => import('pages/groups/view.vue')
-            }
+            },
+            {
+                path:'groups/create',
+                component: () => import('pages/groups/create.vue')
+            },
         ]
     }
 ];

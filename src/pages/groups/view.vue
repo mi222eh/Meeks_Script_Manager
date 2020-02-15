@@ -16,15 +16,8 @@
                     square
                     outlined
                     v-model="groupContainer.group.title"
-                    @change="saveGroupScripts"
-                    label="Title"
-                />
-                <q-input
-                    square
-                    outlined
-                    v-model="groupContainer.group.name"
                     disable
-                    label="Name"
+                    label="Title"
                 />
             </q-form>
 
@@ -32,13 +25,22 @@
                 <q-btn
                     color="primary"
                     label="Run"
+                    :loading="groupContainer.isRunning"
+                    class="q-mr-md"
                     v-on:click="() => execute(groupContainer.group.name)"
                 />
                 <q-btn
+                    color="secondary"
+                    label="Edit Group"
+                    class="q-mr-md"
+                    v-on:click="openEditor"
+                />
+                <q-btn
+                    class="q-mr-md"
                     flat
                     color="primary"
-                    label="View Scripts"
-                    v-on:click="() => (showScripts = true)"
+                    label="back to list"
+                    to="/groups"
                 />
             </div>
 
@@ -50,32 +52,92 @@
                     {{ log }}
                 </div>
             </div>
-            <q-dialog v-model="showScripts" persistent>
-                <q-card style="min-width: 350px">
-                    <q-card-section>
-                        <div class="text-h6">Scripts</div>
-                    </q-card-section>
+            <q-dialog v-model="showEditor" persistent v-if="groupToEdit">
+                <q-card style="min-width: 80vw">
+                    <q-form @submit="saveGroup">
+                        <q-input
+                            square
+                            outlined
+                            disable
+                            v-model="groupToEdit.name"
+                            label="Name (used as id)"
+                        />
+                        <q-input
+                            square
+                            outlined
+                            v-model="groupToEdit.title"
+                            label="Title"
+                            :rules="[
+                                value => value.length > 0 || 'Enter a title'
+                            ]"
+                        />
 
-                    <q-card-section class="q-pt-none">
-                        <q-list bordered separator>
-                            <draggable
-                                v-model="scriptContainerList"
-                                @end="saveGroupScripts"
-                            >
-                                <q-item
-                                    v-for="(script,
-                                    index) in scriptContainerList"
-                                    :key="`script${index}`"
-                                >
-                                    {{ script.script.title }}
-                                </q-item>
-                            </draggable>
-                        </q-list>
-                    </q-card-section>
+                        <div class="text-h5">Script selection</div>
+                        <q-splitter
+                            v-model="splitterModel"
+                            style="height:250px; border: solid 1px black"
+                        >
+                            <template v-slot:before>
+                                <div class="q-pa-md">
+                                    <div class="text-h4 q-mb-md">Attached</div>
+                                    <q-list bordered separator>
+                                        <draggable
+                                            v-model="scriptList"
+                                            group="scriptSelection"
+                                            style="min-height:20px"
+                                        >
+                                            <q-item
+                                                clickable
+                                                v-ripple
+                                                v-for="(script,
+                                                index) in scriptList"
+                                                :key="`script-${index}`"
+                                            >
+                                                <q-item-section>{{
+                                                    script.title
+                                                }}</q-item-section>
+                                            </q-item>
+                                        </draggable>
+                                    </q-list>
+                                </div>
+                            </template>
 
-                    <q-card-actions align="right" class="text-primary">
-                        <q-btn flat label="Close" v-close-popup />
-                    </q-card-actions>
+                            <template v-slot:after>
+                                <div class="q-pa-md">
+                                    <div class="text-h4 q-mb-md">Available</div>
+
+                                    <q-list bordered separator>
+                                        <draggable
+                                            v-model="availableScriptList"
+                                            group="scriptSelection"
+                                            style="min-height:20px"
+                                        >
+                                            <q-item
+                                                clickable
+                                                v-ripple
+                                                v-for="(script,
+                                                index) in availableScriptList"
+                                                :key="`avaScript-${index}`"
+                                            >
+                                                <q-item-section>{{
+                                                    script.title
+                                                }}</q-item-section>
+                                            </q-item>
+                                        </draggable>
+                                    </q-list>
+                                </div>
+                            </template>
+                        </q-splitter>
+                        <q-card-actions align="right" class="text-primary">
+                            <q-btn
+                                label="Save"
+                                type="submit"
+                                color="primary"
+                                glossy
+                            />
+                            <q-btn flat label="Close" v-close-popup />
+                        </q-card-actions>
+                    </q-form>
                 </q-card>
             </q-dialog>
         </div>
@@ -89,7 +151,9 @@ import {
     ScriptGroupObjectContainer,
     ScriptObjectContainer,
     ScriptManagerCommitTypes,
-    ScriptManagerActionTypes
+    ScriptManagerActionTypes,
+    ScriptGroupObject,
+    ScriptObject
 } from '../../store/scriptManager/types';
 export default Vue.extend({
     components: {
@@ -99,27 +163,55 @@ export default Vue.extend({
         execute(name: string) {
             this.$store.dispatch('scriptManager/executeGroupScript', name);
         },
-        getScriptContainerDataList(scriptNameList: string[]) {
-            this.scriptContainerList = scriptNameList.map(scriptName => {
-                return this.$store.getters['scriptManager/getScriptByName'](
-                    scriptName
-                );
-            });
-        },
-        saveGroupScripts() {
+        getScriptList() {
             if (!this.groupContainer) {
                 return;
             }
-            this.$store.dispatch(
+            const scriptNameList = this.groupContainer.group.scripts;
+            this.scriptList = scriptNameList.map(scriptName => {
+                return this.$store.getters['scriptManager/getScriptByName'](
+                    scriptName
+                ).script;
+            });
+        },
+        getAvailableScripts() {
+            const allScripts: ScriptObjectContainer[] = this.$store.getters[
+                'scriptManager/getAllScripts'
+            ];
+
+            this.availableScriptList = allScripts
+                .filter(
+                    avaScript =>
+                        !this.scriptList.some(
+                            script => script.name === avaScript.script.name
+                        )
+                )
+                .map(avaScript => avaScript.script);
+        },
+        openEditor() {
+            if (!this.groupContainer) {
+                return;
+            }
+            this.getScriptList();
+            this.getAvailableScripts();
+            this.groupToEdit = this.$store.getters[
+                'scriptManager/getGroupCopyByName'
+            ](this.groupContainer.group.name);
+            this.showEditor = true;
+        },
+        async saveGroup() {
+            if (!this.groupToEdit) {
+                return;
+            }
+            await this.$store.dispatch(
                 'scriptManager/' + ScriptManagerActionTypes.UPDATE_GROUP,
                 {
-                    name: this.groupContainer.group.name,
-                    scripts: this.scriptContainerList.map(
-                        scr => scr.script.name
-                    ),
-                    title: this.groupContainer.group.title
+                    name: this.groupToEdit.name,
+                    scripts: this.scriptList.map(script => script.name),
+                    title: this.groupToEdit.title
                 }
             );
+            this.showEditor = false;
         }
     },
     mounted() {
@@ -131,32 +223,29 @@ export default Vue.extend({
             return;
         }
         this.groupContainer = group;
-        this.getScriptContainerDataList(this.groupContainer.group.scripts);
-        this.$watch(
-            () => {
-                if (!this.groupContainer) {
-                    return;
-                }
-                return this.groupContainer.log;
-            },
-            () => {
-                const console = this.$el.querySelector('#Console');
-                if (!console) {
-                    return;
-                }
-                console.scrollTop = console.scrollHeight;
-            }
-        );
+    },
+    updated() {
+        const console = this.$el.querySelector('#Console');
+        if (!console) {
+            return;
+        }
+        console.scrollTop = console.scrollHeight;
     },
     data() {
         const data: {
             groupContainer: ScriptGroupObjectContainer | null;
-            scriptContainerList: ScriptObjectContainer[];
-            showScripts: boolean;
+            groupToEdit: ScriptGroupObject | null;
+            scriptList: ScriptObject[];
+            availableScriptList: ScriptObject[];
+            showEditor: boolean;
+            splitterModel: number;
         } = {
             groupContainer: null,
-            scriptContainerList: [],
-            showScripts: false
+            scriptList: [],
+            groupToEdit: null,
+            availableScriptList: [],
+            showEditor: false,
+            splitterModel: 50
         };
         return data;
     }

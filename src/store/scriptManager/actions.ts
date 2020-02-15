@@ -11,6 +11,7 @@ export async function executeScript (context:ScriptManagerContext, name:string) 
         throw 'Could not find script';
     }
     context.commit(ScriptManagerCommitTypes.CLEAR_SCRIPT_LOG, {name:scriptItem.script.name});
+    context.commit(ScriptManagerCommitTypes.SET_SCRIPT_IN_PROGRESS, {name:scriptItem.script.name});
     const process = executor.runProcess({
         command: scriptItem.script.command,
         cwd: scriptItem.script.cwd
@@ -21,12 +22,15 @@ export async function executeScript (context:ScriptManagerContext, name:string) 
     const result = await process.promise();
     context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {name: scriptItem.script.name, row:result.error});
     context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {name: scriptItem.script.name, row:result.output});
+    context.commit(ScriptManagerCommitTypes.SET_SCRIPT_NOT_IN_PROGRESS, {name:scriptItem.script.name});
 }
 export async function executeGroupScript (context:ScriptManagerContext, name:string) {
     const groupItem = context.state.groupList.find(group => group.group.name === name);
     if(!groupItem){
         throw 'Could not find Group';
     }
+    context.commit(ScriptManagerCommitTypes.CLEAR_GROUP_LOG, {name: groupItem.group.name});
+    context.commit(ScriptManagerCommitTypes.SET_GROUP_IN_PROGRESS, {name: groupItem.group.name});
     for (const script of groupItem.group.scripts) {
         const scriptItem = context.state.scriptList.find(scriptItem => scriptItem.script.name === script);
         if(!scriptItem){
@@ -51,6 +55,7 @@ export async function executeGroupScript (context:ScriptManagerContext, name:str
             name,
             row: result.error
         });
+        context.commit(ScriptManagerCommitTypes.SET_GROUP_NOT_IN_PROGRESS, {name: groupItem.group.name});
     }
 
 }
@@ -81,8 +86,18 @@ export async function createScript(context: ScriptManagerContext, payload: Scrip
     saveScripts(context.state.scriptList.map(script => script.script));
 }
 
-export async function addScript(){
-
+export async function createGroup(context: ScriptManagerContext, payload: ScriptGroupObject){
+    if(!payload.title){
+        throw 'title is rquired';
+    }
+    if(!payload.name){
+        throw 'Name is required';
+    }
+    if(context.state.groupList.find(item => item.group.name === payload.name)){
+        throw 'Name already exists';
+    }
+    context.commit(ScriptManagerCommitTypes.ADD_GROUP, payload);
+    saveGroups(context.state.groupList.map(item => item.group));
 }
 
 export async function loadScripts(context: ScriptManagerContext){
@@ -90,4 +105,25 @@ export async function loadScripts(context: ScriptManagerContext){
     context.commit(ScriptManagerCommitTypes.SET_SCRIPTS, scripts);
     const groups = await getGroups();
     context.commit(ScriptManagerCommitTypes.SET_GROUPS, groups);
+}
+
+export async function removeScript(context: ScriptManagerContext, name:string){
+    const scriptItem = context.state.scriptList.find(script => script.script.name === name);
+    if(!scriptItem){
+        throw 'Could not find script';
+    }
+    if(scriptItem.isRunning){
+        throw 'Script is running';
+    }
+    context.commit(ScriptManagerCommitTypes.REMOVE_SCRIPT, {name: scriptItem.script.name});
+}
+export async function removeGroup(context: ScriptManagerContext, name:string){
+    const groupItem = context.state.groupList.find(group => group.group.name === name);
+    if(!groupItem){
+        throw 'Could not find Group';
+    }
+    if(groupItem.isRunning){
+        throw 'Group is running';
+    }
+    context.commit(ScriptManagerCommitTypes.REMOVE_GROUP, {name: groupItem.group.name});
 }
