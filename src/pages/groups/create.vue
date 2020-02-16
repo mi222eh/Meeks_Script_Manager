@@ -44,6 +44,9 @@
                                     v-for="(script, index) in scripts"
                                     :key="`script-${index}`"
                                 >
+                                <q-item-section avatar top>
+                                    <q-avatar icon="remove" color="red" text-color="white" v-on:click="() => removeScript(index)"/>
+                                </q-item-section>
                                     <q-item-section>{{
                                         script.title
                                     }}</q-item-section>
@@ -58,22 +61,19 @@
                         <div class="text-h4 q-mb-md">Available</div>
 
                         <q-list bordered separator>
-                            <draggable
-                                v-model="availableScripts"
-                                group="scriptSelection"
-                                style="min-height:20px"
+                            <q-item
+                                clickable
+                                v-ripple
+                                v-for="(script, index) in availableScripts"
+                                :key="`avaScript-${index}`"
                             >
-                                <q-item
-                                    clickable
-                                    v-ripple
-                                    v-for="(script, index) in availableScripts"
-                                    :key="`avaScript-${index}`"
-                                >
-                                    <q-item-section>{{
-                                        script.title
-                                    }}</q-item-section>
-                                </q-item>
-                            </draggable>
+                                <q-item-section avatar top>
+                                    <q-avatar icon="add" color="green" text-color="white" v-on:click="() => addScript(script)"/>
+                                </q-item-section>
+                                <q-item-section>{{
+                                    script.title
+                                }}</q-item-section>
+                            </q-item>
                         </q-list>
                     </div>
                 </template>
@@ -107,6 +107,12 @@ export default Vue.extend({
             };
             await this.$store.dispatch('scriptManager/createGroup', group);
             this.$router.push('/groups');
+        },
+        addScript(script: ScriptObject){
+            this.scripts.push(script);
+        },
+        removeScript(index: number){
+            this.scripts.splice(index, 1);
         }
     },
     mounted() {
@@ -115,6 +121,7 @@ export default Vue.extend({
         ];
         this.availableScripts = containers.map(item => item.script);
     },
+
     data() {
         const data: {
             name: string;

@@ -93,6 +93,19 @@
                                                 index) in scriptList"
                                                 :key="`script-${index}`"
                                             >
+                                                <q-item-section avatar top>
+                                                    <q-avatar
+                                                        icon="remove"
+                                                        color="red"
+                                                        text-color="white"
+                                                        v-on:click="
+                                                            () =>
+                                                                removeScript(
+                                                                    index
+                                                                )
+                                                        "
+                                                    />
+                                                </q-item-section>
                                                 <q-item-section>{{
                                                     script.title
                                                 }}</q-item-section>
@@ -107,23 +120,27 @@
                                     <div class="text-h4 q-mb-md">Available</div>
 
                                     <q-list bordered separator>
-                                        <draggable
-                                            v-model="availableScriptList"
-                                            group="scriptSelection"
-                                            style="min-height:20px"
+                                        <q-item
+                                            clickable
+                                            v-ripple
+                                            v-for="(script,
+                                            index) in availableScriptList"
+                                            :key="`avaScript-${index}`"
                                         >
-                                            <q-item
-                                                clickable
-                                                v-ripple
-                                                v-for="(script,
-                                                index) in availableScriptList"
-                                                :key="`avaScript-${index}`"
-                                            >
-                                                <q-item-section>{{
-                                                    script.title
-                                                }}</q-item-section>
-                                            </q-item>
-                                        </draggable>
+                                            <q-item-section avatar top>
+                                                <q-avatar
+                                                    icon="add"
+                                                    color="green"
+                                                    text-color="white"
+                                                    v-on:click="
+                                                        () => addScript(script)
+                                                    "
+                                                />
+                                            </q-item-section>
+                                            <q-item-section>{{
+                                                script.title
+                                            }}</q-item-section>
+                                        </q-item>
                                     </q-list>
                                 </div>
                             </template>
@@ -179,14 +196,9 @@ export default Vue.extend({
                 'scriptManager/getAllScripts'
             ];
 
-            this.availableScriptList = allScripts
-                .filter(
-                    avaScript =>
-                        !this.scriptList.some(
-                            script => script.name === avaScript.script.name
-                        )
-                )
-                .map(avaScript => avaScript.script);
+            this.availableScriptList = allScripts.map(
+                avaScript => avaScript.script
+            );
         },
         openEditor() {
             if (!this.groupContainer) {
@@ -212,6 +224,12 @@ export default Vue.extend({
                 }
             );
             this.showEditor = false;
+        },
+        addScript(script: ScriptObject) {
+            this.scriptList.push(script);
+        },
+        removeScript(index: number) {
+            this.scriptList.splice(index, 1);
         }
     },
     mounted() {
