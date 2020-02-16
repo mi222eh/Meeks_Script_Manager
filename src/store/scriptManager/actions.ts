@@ -105,12 +105,12 @@ export async function executeGroupScript(
                 name,
                 row: e.message || e
             });
-        } finally {
-            context.commit(ScriptManagerCommitTypes.SET_GROUP_NOT_IN_PROGRESS, {
-                name: groupItem.group.name
-            });
+            break;
         }
     }
+    context.commit(ScriptManagerCommitTypes.SET_GROUP_NOT_IN_PROGRESS, {
+        name: groupItem.group.name
+    });
 }
 
 export async function updateScript(
