@@ -1,13 +1,13 @@
 <template>
-  <div id="q-app">
-    <router-view />
-  </div>
+    <div id="q-app">
+        <router-view />
+    </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 
 export default Vue.extend({
-  name: "App"
+    name: 'App'
 });
 </script>

@@ -3,114 +3,69 @@ import * as executor from '../components/scriptExecutor';
 import {
     ScriptManagerContext,
     ScriptManagerCommitTypes,
-    ScriptObject,
-    ScriptObjectContainer,
-    ScriptGroupObject
-} from './types';
-import { getScripts, getGroups, saveGroups, saveScripts } from './DAL';
+    ScriptObject} from './types';
+import { getScripts, saveScripts } from './DAL';
+import { ChildProcess } from 'child_process';
+
+const processMap: {
+    [key:string]: ChildProcess | null | undefined
+} = {};
 
 export async function executeScript(
     context: ScriptManagerContext,
-    name: string
+    id: number
 ) {
     const scriptItem = context.state.scriptList.find(
-        script => script.script.name === name
+        script => script.script.id === id
     );
     if (!scriptItem) {
         throw 'Could not find script';
     }
-    context.commit(ScriptManagerCommitTypes.CLEAR_SCRIPT_LOG, {
-        name: scriptItem.script.name
-    });
+    
     context.commit(ScriptManagerCommitTypes.SET_SCRIPT_IN_PROGRESS, {
-        name: scriptItem.script.name
+        id: scriptItem.script.id
     });
-    const process = executor.runProcess({
-        command: scriptItem.script.command,
-        cwd: scriptItem.script.cwd
+    context.commit(ScriptManagerCommitTypes.CLEAR_SCRIPT_LOG, {
+        id: scriptItem.script.id
     });
-    process.process.stdout.on('data', chunk => {
-        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-            name: scriptItem.script.name,
-            row: chunk
-        });
-    });
-    try {
-        const result = await process.promise();
-
-        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-            name: scriptItem.script.name,
-            row: result.error
-        });
-        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-            name: scriptItem.script.name,
-            row: result.output
-        });
-    } catch (e) {
-        context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-            name,
-            row: e.message || e
-        });
-    } finally {
-        context.commit(ScriptManagerCommitTypes.SET_SCRIPT_NOT_IN_PROGRESS, {
-            name: scriptItem.script.name
-        });
-    }
-}
-export async function executeGroupScript(
-    context: ScriptManagerContext,
-    name: string
-) {
-    const groupItem = context.state.groupList.find(
-        group => group.group.name === name
-    );
-    if (!groupItem) {
-        throw 'Could not find Group';
-    }
-    context.commit(ScriptManagerCommitTypes.CLEAR_GROUP_LOG, {
-        name: groupItem.group.name
-    });
-    context.commit(ScriptManagerCommitTypes.SET_GROUP_IN_PROGRESS, {
-        name: groupItem.group.name
-    });
-    for (const script of groupItem.group.scripts) {
-        const scriptItem = context.state.scriptList.find(
-            scriptItem => scriptItem.script.name === script
-        );
-        if (!scriptItem) {
-            throw 'Could not find script';
-        }
+    for (const command of scriptItem.script.commandList) {
         const process = executor.runProcess({
-            command: scriptItem.script.command,
-            cwd: scriptItem.script.cwd
+            command: command.command,
+            cwd: command.cwd
         });
+        processMap[scriptItem.script.id] = process.process;
         process.process.stdout.on('data', chunk => {
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
-                name,
+            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                id: scriptItem.script.id,
                 row: chunk
             });
         });
         try {
             const result = await process.promise();
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
-                name,
-                row: result.output
-            });
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
-                name,
+    
+            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                id: scriptItem.script.id,
                 row: result.error
             });
+            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                id: scriptItem.script.id,
+                row: result.output
+            });
         } catch (e) {
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_GROUP_LOG, {
-                name,
+            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                id: scriptItem.script.id,
                 row: e.message || e
             });
             break;
         }
+        finally{
+            processMap[scriptItem.script.id] = null;
+        }
     }
-    context.commit(ScriptManagerCommitTypes.SET_GROUP_NOT_IN_PROGRESS, {
-        name: groupItem.group.name
+    context.commit(ScriptManagerCommitTypes.SET_SCRIPT_NOT_IN_PROGRESS, {
+        id: scriptItem.script.id,
     });
+
 }
 
 export async function updateScript(
@@ -119,71 +74,40 @@ export async function updateScript(
 ) {
     console.log(payload);
 
-    context.commit(ScriptManagerCommitTypes.UPDATE_SCRIPT, payload);
-    await saveScripts(context.state.scriptList.map(script => script.script));
-}
+    const copy:ScriptObject = JSON.parse(JSON.stringify(payload));
+    console.log('commands to set id to', copy.commandList.filter((command) => command.commandId < 0));
+    copy.commandList.filter((command) => command.commandId < 0).forEach((command) => {
+        command.commandId = copy.commandList.reduce((acc, curr) => curr.commandId < acc ? acc : curr.commandId + 1, 1)
+    })
 
-export async function updateGroup(
-    context: ScriptManagerContext,
-    payload: ScriptGroupObject
-) {
-    context.commit(ScriptManagerCommitTypes.UPDATE_GROUP, payload);
-    await saveGroups(context.state.groupList.map(gI => gI.group));
+    context.commit(ScriptManagerCommitTypes.UPDATE_SCRIPT, copy);
+    await saveScripts(context.state.scriptList.map(script => script.script));
 }
 
 export async function createScript(
     context: ScriptManagerContext,
     payload: ScriptObject
 ) {
-    if (!payload.command) {
-        throw 'Command is rquired';
-    }
-    if (!payload.name) {
-        throw 'Name is required';
-    }
-    if (
-        context.state.scriptList.find(
-            script => script.script.name === payload.name
-        )
-    ) {
-        throw 'Name already exists';
-    }
-    context.commit(ScriptManagerCommitTypes.ADD_SCRIPT, payload);
-    saveScripts(context.state.scriptList.map(script => script.script));
-}
-
-export async function createGroup(
-    context: ScriptManagerContext,
-    payload: ScriptGroupObject
-) {
     if (!payload.title) {
-        throw 'title is rquired';
+        throw 'Title is required';
     }
-    if (!payload.name) {
-        throw 'Name is required';
-    }
-    if (
-        context.state.groupList.find(item => item.group.name === payload.name)
-    ) {
-        throw 'Name already exists';
-    }
-    context.commit(ScriptManagerCommitTypes.ADD_GROUP, payload);
-    saveGroups(context.state.groupList.map(item => item.group));
+    payload.id = context.state.scriptList.reduce((acc, curr) => curr.script.id < acc ? acc : curr.script.id + 1, 1);
+    context.commit(ScriptManagerCommitTypes.ADD_SCRIPT, payload);
+    await saveScripts(context.state.scriptList.map(script => script.script));
+    return context.state.scriptList.find(script => script.script.id === payload.id);
 }
 
 export async function loadScripts(context: ScriptManagerContext) {
     const scripts = await getScripts();
     context.commit(ScriptManagerCommitTypes.SET_SCRIPTS, scripts);
-    const groups = await getGroups();
-    context.commit(ScriptManagerCommitTypes.SET_GROUPS, groups);
 }
 
 export async function removeScript(
     context: ScriptManagerContext,
-    name: string
+    id: number
 ) {
     const scriptItem = context.state.scriptList.find(
-        script => script.script.name === name
+        script => script.script.id === id
     );
     if (!scriptItem) {
         throw 'Could not find script';
@@ -192,22 +116,18 @@ export async function removeScript(
         throw 'Script is running';
     }
     context.commit(ScriptManagerCommitTypes.REMOVE_SCRIPT, {
-        name: scriptItem.script.name
+        id: scriptItem.script.id
     });
     saveScripts(context.state.scriptList.map(x => x.script));
 }
-export async function removeGroup(context: ScriptManagerContext, name: string) {
-    const groupItem = context.state.groupList.find(
-        group => group.group.name === name
-    );
-    if (!groupItem) {
-        throw 'Could not find Group';
+
+export async function sendProcessInput(context: ScriptManagerContext, payload: {id: number, input:string}){
+    const process = processMap[payload.id];
+    if(!process){
+        return;
     }
-    if (groupItem.isRunning) {
-        throw 'Group is running';
-    }
-    context.commit(ScriptManagerCommitTypes.REMOVE_GROUP, {
-        name: groupItem.group.name
-    });
-    saveGroups(context.state.groupList.map(x => x.group));
+    // process.send(payload.input);
+    process.stdin.write(payload.input,function (...rest) {
+        console.log({rest});
+    })
 }

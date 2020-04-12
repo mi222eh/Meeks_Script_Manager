@@ -4,29 +4,13 @@
             <q-input
                 square
                 outlined
-                v-model="script.name"
-                label="Name (used as id)"
+                v-model="script.title"
+                label="Title"
                 :rules="[
-                    value => value.length > 0 || 'Enter a name',
-                    value => value.split(' ').length <= 1 || 'No spaces in name',
-                    value =>
-                        !$store.getters['scriptManager/getAllScripts'].some(
-                            script => script.script.name === value
-                        ) || 'Name already exists'
-                ]"
-            />
-            <q-input square outlined v-model="script.title" label="Title" :rules="[
-                    value => value.length > 0 || 'Enter a title']"/>
-            <q-input square outlined v-model="script.command" label="Command" :rules="[
-                    value => value.length > 0 || 'Enter a command']"/>
-            <q-input
-                square
-                outlined
-                v-model="script.cwd"
-                label="CWD(Current Working Directory)"
+                    value => value.length > 0 || 'Enter a title']"
             />
             <div class="q-mt-md">
-                <q-btn label="Create" type="submit" color="primary" glossy/>
+                <q-btn label="Create" type="submit" color="primary" glossy />
                 <q-btn label="Back" to="/scripts" color="primary" flat class="q-ml-sm" />
             </div>
         </q-form>
@@ -35,19 +19,24 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { ScriptObject } from 'src/store/scriptManager/types';
+import {
+    ScriptObject,
+    ScriptObjectContainer
+} from 'src/store/scriptManager/types';
 
 export default Vue.extend({
     methods: {
         async createScript() {
             const script: ScriptObject = {
-                name: this.script.name,
+                id: this.script.id,
                 title: this.script.title,
-                command: this.script.command,
-                cwd: this.script.cwd
+                commandList: this.script.commandList
             };
-            await this.$store.dispatch('scriptManager/createScript', script);
-            this.$router.push('/scripts')
+            const scriptContainer: ScriptObjectContainer = await this.$store.dispatch(
+                'scriptManager/createScript',
+                script
+            );
+            this.$router.push('/scripts/view/' + scriptContainer.script.id);
         }
     },
     data() {
@@ -55,10 +44,9 @@ export default Vue.extend({
             script: ScriptObject;
         } = {
             script: {
-                name: '',
+                id: -1,
                 title: '',
-                command: '',
-                cwd: ''
+                commandList: []
             }
         };
         return data;

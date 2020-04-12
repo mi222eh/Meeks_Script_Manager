@@ -1,53 +1,90 @@
 <template>
     <q-page class="q-pa-md">
-        <q-btn to="scripts/create" label="Create new script" glossy="" color="primary"></q-btn>
-        <q-card
-            class="q-ma-md my-card"
-            bordered
-            v-for="(scriptContainer, index) in $store.getters[
+        <div class="button-row">
+            <q-btn to="scripts/create" label="Create new script" glossy color="primary"></q-btn>
+            <q-btn @click="() => importScript()" label="Import" glossy color="secondary"></q-btn>
+        </div>
+        <q-list separator class="q-mt-md">
+            <q-item
+                clickable
+                v-ripple
+                v-for="(scriptContainer, index) in $store.getters[
                 'scriptManager/getAllScripts'
             ]"
-            :key="`script${index}`"
-        >
-            <q-card-section>
-                <!-- <div class="text-overline text-orange-9">Build Buster75</div> -->
-                <div class="text-h5 q-ml-xs">{{ scriptContainer.script.title }}</div>
-            </q-card-section>
-
-            <q-card-actions class="q-ml-md">
-                <q-btn
-                    color="primary"
-                    label="Run"
-                    :loading="scriptContainer.isRunning"
-                    v-on:click="() => runCommand(scriptContainer.script.name)"
-                />
-                <q-btn
-                    flat
-                    color="primary"
-                    label="View"
-                    v-on:click="() => gotoScript(scriptContainer.script.name)"
-                />
-                <q-btn
-                    flat
-                    color="red"
-                    label="Delete"
-                    v-on:click="() => deleteScript(scriptContainer)"
-                />
-            </q-card-actions>
-        </q-card>
+                :key="`script${index}`"
+            >
+                <q-item-section
+                    clickable
+                    v-on:click="() => gotoScript(scriptContainer.script.id)"
+                >{{scriptContainer.script.title}}</q-item-section>
+                <q-item-section top side>
+                    <q-btn size="12px" flat dense round icon="more_vert">
+                        <q-menu transition-show="scale" transition-hide="scale">
+                            <q-list separator class="menu-list">
+                                <q-item
+                                    clickable
+                                    v-ripple
+                                    class="run"
+                                    v-on:click="() => runCommand(scriptContainer.script.id)"
+                                >
+                                    <q-item-section>Run</q-item-section>
+                                </q-item>
+                                <q-item
+                                    clickable
+                                    v-ripple
+                                    class="view"
+                                    v-on:click="() => gotoScript(scriptContainer.script.id)"
+                                >
+                                    <q-item-section>View</q-item-section>
+                                </q-item>
+                                <q-item
+                                    clickable
+                                    v-ripple
+                                    class="delete"
+                                    v-on:click="() => deleteScript(scriptContainer)"
+                                >
+                                    <q-item-section>Delete</q-item-section>
+                                </q-item>
+                            </q-list>
+                        </q-menu>
+                    </q-btn>
+                </q-item-section>
+            </q-item>
+        </q-list>
     </q-page>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { ScriptObjectContainer } from 'src/store/scriptManager/types';
+import { remote } from 'electron';
+import { readJSON } from 'fs-extra';
 export default Vue.extend({
     methods: {
-        async runCommand(name: string) {
-            await this.$store.dispatch('scriptManager/executeScript', name);
+        async runCommand(id: number) {
+            await this.$store.dispatch('scriptManager/executeScript', id);
         },
-        gotoScript(name:string){
-            this.$router.push(`/scripts/view/${name}`);
+        gotoScript(id: number) {
+            this.$router.push(`/scripts/view/${id}`);
+        },
+        async importScript() {
+            const files = await remote.dialog.showOpenDialog({
+                properties: ['openFile', 'multiSelections'],
+                filters: [
+                    {
+                        name: 'JSON',
+                        extensions: ['json']
+                    }
+                ]
+            });
+            if (files.canceled) {
+                return;
+            }
+            files.filePaths.forEach(async filePath => {
+                const script = await readJSON(filePath);
+                this.$store.dispatch('scriptManager/createScript', script);
+                console.log('file path', script);
+            });
         },
         deleteScript(script: ScriptObjectContainer) {
             this.$q
@@ -60,7 +97,7 @@ export default Vue.extend({
                 .onOk(() => {
                     this.$store.dispatch(
                         'scriptManager/removeScript',
-                        script.script.name
+                        script.script.id
                     );
                 });
         }
@@ -68,4 +105,27 @@ export default Vue.extend({
 });
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+.menu-list {
+    .run {
+        background-color: $primary;
+        color: white;
+    }
+    .view {
+        color: $primary;
+    }
+    .delete {
+        // background-color: red;
+        color: red;
+    }
+}
+.button-row {
+    display: flex;
+    > * {
+        margin-left: 15px;
+        &:first-child {
+            margin-left: 0;
+        }
+    }
+}
+</style>

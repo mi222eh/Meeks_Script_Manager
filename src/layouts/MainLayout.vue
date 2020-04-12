@@ -10,29 +10,17 @@
                     icon="menu"
                     aria-label="Menu"
                 />
-                <q-toolbar-title>
-                    Script Manager
-                </q-toolbar-title>
+                <q-toolbar-title>Script Manager</q-toolbar-title>
                 <!-- <q-slider v-model="standard" :min="0" :max="50"/> -->
                 <!-- <div>1.0.0</div> -->
             </q-toolbar>
         </q-header>
 
-        <q-drawer
-            v-model="leftDrawerOpen"
-            show-if-above
-            bordered
-            content-class="bg-grey-1"
-        >
-            <q-list>
-                <q-item-label header class="text-grey-8">
-                    Pages
-                </q-item-label>
+        <q-drawer v-model="leftDrawerOpen" show-if-above bordered content-class="bg-grey-1">
+            <q-list class="q-mt-md">
+                <q-item-label header class="text-grey-8">Pages</q-item-label>
                 <q-item>
                     <q-btn to="/scripts" label="Script List" />
-                </q-item>
-                <q-item>
-                    <q-btn to="/groups" label="Script Group List" />
                 </q-item>
             </q-list>
         </q-drawer>
@@ -51,13 +39,13 @@ export default Vue.extend({
 
     data() {
         return {
-            leftDrawerOpen: false,
+            leftDrawerOpen: false
         };
     }
 });
 </script>
 <style lang="scss" scoped>
-main{
+main {
     display: flex;
     flex-direction: column;
 }

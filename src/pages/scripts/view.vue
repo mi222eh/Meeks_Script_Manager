@@ -1,88 +1,143 @@
 <template>
     <q-page class="q-pa-md script-page">
-        <q-banner
-            inline-actions
-            class="text-white bg-red"
-            v-if="!scriptContainer"
-        >
+        <q-banner inline-actions class="text-white bg-red" v-if="!scriptContainer">
             Could not find the specific script
             <template v-slot:action>
                 <q-btn flat color="white" label="Go back" to="/scripts" />
             </template>
         </q-banner>
-        <div v-else>
-            <q-input
-                square
-                outlined
-                v-model="scriptContainer.script.title"
-                disable
-                label="Title"
-            />
-            <q-input
-                square
-                outlined
-                v-model="scriptContainer.script.command"
-                disable
-                label="Command"
-            />
-            <q-input
-                square
-                outlined
-                v-model="scriptContainer.script.cwd"
-                disable
-                label="CWD"
-            />
-
-            <div class="buttons">
+        <div v-else class="flex-column flex-grow">
+            <q-input square outlined v-model="scriptTitle" label="Title" />
+            <div class="buttons q-my-md">
                 <q-btn
                     class="q-mr-md"
                     color="primary"
                     label="Run"
                     :loading="scriptContainer.isRunning"
-                    v-on:click="() => execute(scriptContainer.script.name)"
+                    v-on:click="() => execute(scriptContainer.script.id)"
                 />
-                <q-btn
-                    class="q-mr-md"
-                    color="secondary"
-                    label="Edit Script"
-                    v-on:click="openScriptEdit"
-                />
+                <q-btn class="q-mr-md" flat color="primary" label="back to list" to="/scripts" />
                 <q-btn
                     class="q-mr-md"
                     flat
-                    color="primary"
-                    label="back to list"
-                    to="/scripts"
+                    color="secondary"
+                    label="Export"
+                    @click="() => exportScript()"
                 />
             </div>
-
-            <div id="Console" ref="console">
-                <div
-                    v-for="(log, index) in scriptContainer.log"
-                    :key="`log${index}`"
+            <q-card class="flex-grow flex-column">
+                <q-tabs
+                    v-model="tab"
+                    dense
+                    class="text-grey"
+                    active-color="primary"
+                    indicator-color="primary"
+                    align="justify"
                 >
-                    {{ log }}
-                </div>
-            </div>
-            <q-dialog v-model="editorOpen" persistent v-if="scriptToEdit">
+                    <q-tab name="console" label="Console" />
+                    <q-tab name="commands" label="Command List" />
+                </q-tabs>
+
+                <q-separator class="flex-shrink" />
+
+                <q-tab-panels v-model="tab" animated class="panels flex-column flex-grow">
+                    <q-tab-panel name="console" class="flex-grow flex-column">
+                        <div id="Console" ref="console" class="flex-grow">
+                            <div
+                                v-for="(log, index) in scriptContainer.log"
+                                :key="`log${index}`"
+                            >{{ log }}</div>
+                        </div>
+                        <!-- <q-input
+                            prefix=">"
+                            square
+                            dense
+                            outlined
+                            v-model="commandLine"
+                            v-on:keyup.enter="sendCommandLine"
+                        />-->
+                    </q-tab-panel>
+
+                    <q-tab-panel name="commands" class="flex-grow">
+                        <q-btn
+                            color="positive"
+                            glossy
+                            label="Add Command"
+                            class="full-width"
+                            @click="() => openCreateCommand()"
+                            stretch
+                        />
+                        <q-list bordered separator class="q-mt-md">
+                            <draggable v-model="commandList" draggable=".command">
+                                <transition-group>
+                                    <q-item
+                                        clickable
+                                        v-ripple
+                                        :class="{
+                                        'command': !scriptContainer.isRunning
+                                    }"
+                                        v-for="(command) in commandList"
+                                        :key="command.commandId"
+                                    >
+                                        <q-item-section>
+                                            <q-item-label>{{command.title}}</q-item-label>
+                                            <q-item-label caption>{{command.command}}</q-item-label>
+                                        </q-item-section>
+                                        <q-item-section top side>
+                                            <q-btn size="12px" flat dense round icon="more_vert">
+                                                <q-menu
+                                                    transition-show="scale"
+                                                    transition-hide="scale"
+                                                >
+                                                    <q-list separator class="menu-list">
+                                                        <!-- <q-item
+                                                        clickable
+                                                        v-ripple
+                                                        class="run"
+                                                        v-on:click="() => runCommand(scriptContainer.script.id)"
+                                                    >
+                                                        <q-item-section>Run</q-item-section>
+                                                        </q-item>-->
+                                                        <q-item
+                                                            clickable
+                                                            v-ripple
+                                                            class="view"
+                                                            v-on:click="() => openEditCommand(command)"
+                                                        >
+                                                            <q-item-section>View</q-item-section>
+                                                        </q-item>
+                                                        <q-item
+                                                            clickable
+                                                            v-ripple
+                                                            class="delete"
+                                                            v-on:click="() => deleteCommand(command.commandId)"
+                                                        >
+                                                            <q-item-section>Delete</q-item-section>
+                                                        </q-item>
+                                                    </q-list>
+                                                </q-menu>
+                                            </q-btn>
+                                        </q-item-section>
+                                    </q-item>
+                                </transition-group>
+                            </draggable>
+                        </q-list>
+                    </q-tab-panel>
+                </q-tab-panels>
+            </q-card>
+
+            <q-dialog v-model="editorOpen" persistent>
                 <q-card style="min-width: 80vw">
-                    <q-form @submit="saveScript">
+                    <q-form @submit="saveCurrentCommandObject">
                         <q-card-section>
-                            <div class="text-h6">Edit</div>
+                            <div class="text-h6">Command</div>
                         </q-card-section>
 
                         <q-card-section class="q-pt-none">
                             <q-input
                                 square
                                 outlined
-                                v-model="scriptToEdit.name"
-                                label="Name (used as id)"
-                                disable
-                            />
-                            <q-input
-                                square
-                                outlined
-                                v-model="scriptToEdit.title"
+                                v-model="commandObject.title"
                                 label="Title"
                                 :rules="[
                                     value => value.length > 0 || 'Enter a title'
@@ -91,7 +146,7 @@
                             <q-input
                                 square
                                 outlined
-                                v-model="scriptToEdit.command"
+                                v-model="commandObject.command"
                                 label="Command"
                                 :rules="[
                                     value =>
@@ -101,18 +156,13 @@
                             <q-input
                                 square
                                 outlined
-                                v-model="scriptToEdit.cwd"
+                                v-model="commandObject.cwd"
                                 label="CWD(Current Working Directory)"
                             />
                         </q-card-section>
 
                         <q-card-actions align="right" class="text-primary">
-                            <q-btn
-                                label="Save"
-                                type="submit"
-                                color="primary"
-                                glossy
-                            />
+                            <q-btn label="Done" type="submit" color="primary" glossy />
                             <q-btn flat label="Close" v-close-popup />
                         </q-card-actions>
                     </q-form>
@@ -124,57 +174,138 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import draggable from 'vuedraggable';
+import { remote } from 'electron';
 
 import {
     ScriptObjectContainer,
+    CommandObject,
     ScriptObject
 } from '../../store/scriptManager/types';
+import { writeJSON } from 'fs-extra';
 export default Vue.extend({
+    components: {
+        draggable
+    },
     methods: {
         execute(name: string) {
             this.$store.dispatch('scriptManager/executeScript', name);
         },
-        async saveScript() {
-
-            if (!this.scriptToEdit) {
-                return;
-            }
-            await this.$store.dispatch(
-                'scriptManager/updateScript',
-                this.scriptToEdit
-            );
+        async saveCurrentCommandObject() {
             this.editorOpen = false;
-        },
-        openScriptEdit() {
-            this.scriptToEdit = null;
-            if (!this.scriptContainer) {
+            if (!this.scriptId) {
                 return;
             }
             const script: ScriptObject = this.$store.getters[
-                'scriptManager/getScriptCopyByName'
-            ](this.scriptContainer.script.name);
-            if (!script) {
+                'scriptManager/getScriptCopyById'
+            ](this.scriptId);
+            if (this.commandObject && this.commandObject.commandId < 0) {
+                script.commandList.push(this.commandObject);
+            } else if (this.commandObject) {
+                const index = script.commandList.findIndex(
+                    command =>
+                        this.commandObject.commandId === command.commandId
+                );
+                script.commandList[index] = this.commandObject;
+            }
+            await this.$store.dispatch('scriptManager/updateScript', script);
+        },
+        openCreateCommand() {
+            this.commandObject = {
+                commandId: -1,
+                title: '',
+                command: '',
+                cwd: ''
+            };
+            this.editorOpen = true;
+        },
+        deleteCommand(commandId: number) {
+            const script: ScriptObject = this.$store.getters[
+                'scriptManager/getScriptCopyById'
+            ](this.scriptId);
+            script.commandList = script.commandList.filter(
+                command => command.commandId !== commandId
+            );
+            this.$store.dispatch('scriptManager/updateScript', script);
+        },
+        openEditCommand(commandObject: CommandObject) {
+            this.commandObject = JSON.parse(JSON.stringify(commandObject));
+            this.editorOpen = true;
+        },
+        sendCommandLine() {
+            this.$store.dispatch('scriptManager/sendProcessInput', {
+                id: this.scriptId,
+                input: this.commandLine
+            });
+            this.commandLine = '';
+        },
+        async exportScript() {
+            const file = await remote.dialog.showSaveDialog({
+                filters: [
+                    {
+                        name: 'JSON',
+                        extensions: ['json']
+                    }
+                ],
+                title: 'Save Script'
+            });
+            if (file.canceled) {
                 return;
             }
-            this.scriptToEdit = script;
-            this.editorOpen = true;
+            const script: ScriptObject = this.$store.getters[
+                'scriptManager/getScriptCopyById'
+            ](this.scriptId);
+            script.id = -1;
+            writeJSON(file.filePath, script, {});
         }
     },
+
+    computed: {
+        commandList: {
+            get() {
+                const script: ScriptObjectContainer = this.$store.getters[
+                    'scriptManager/getScriptById'
+                ](this.scriptId);
+                console.log('Command List', script.script.commandList);
+                return script.script.commandList;
+            },
+            set(value: CommandObject[]) {
+                const script: ScriptObject = this.$store.getters[
+                    'scriptManager/getScriptCopyById'
+                ](this.scriptId);
+                script.commandList = value;
+                this.$store.commit('scriptManager/updateScript', script);
+            }
+        },
+        scriptContainer() {
+            const script: ScriptObjectContainer = this.$store.getters[
+                'scriptManager/getScriptById'
+            ](this.scriptId);
+            return script;
+        },
+        scriptTitle: {
+            get() {
+                const script: ScriptObject = this.$store.getters[
+                    'scriptManager/getScriptCopyById'
+                ](this.scriptId);
+                return script.title;
+            },
+            set(value) {
+                const script: ScriptObject = this.$store.getters[
+                    'scriptManager/getScriptCopyById'
+                ](this.scriptId);
+                script.title = value;
+                this.$store.commit('scriptManager/updateScript', script);
+            }
+        }
+    },
+
     mounted() {
-        const { name } = this.$route.params;
-        const script: ScriptObjectContainer = this.$store.getters[
-            'scriptManager/getScriptByName'
-        ](name);
-
-        if (!script) {
-            return;
-        }
-        this.scriptContainer = script;
+        const { id } = this.$route.params;
+        this.scriptId = parseInt(id);
     },
-    created(){
-
-    },
-    updated(){
+    created() {},
+    updated() {
         const consoleElement = this.$el.querySelector('#Console');
         if (!consoleElement) {
             return;
@@ -183,13 +314,22 @@ export default Vue.extend({
     },
     data() {
         const data: {
-            scriptContainer: ScriptObjectContainer | null;
-            scriptToEdit: ScriptObject | null;
+            commandObject: CommandObject;
+            scriptId: number;
             editorOpen: boolean;
+            tab: string;
+            commandLine: string;
         } = {
-            scriptContainer: null,
-            scriptToEdit: null,
-            editorOpen: false
+            scriptId: -1,
+            commandObject: {
+                commandId: -1,
+                title: '',
+                command: '',
+                cwd: ''
+            },
+            editorOpen: false,
+            tab: 'console',
+            commandLine: ''
         };
         return data;
     }
@@ -201,10 +341,42 @@ export default Vue.extend({
     display: flex;
     flex-direction: column;
     height: calc(100% - 222px);
+    .q-panel {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: column;
+    }
+    .panels {
+        // height: 64vh;
+    }
     #Console {
         border: 1px black solid;
-        height: calc(100vh - 18rem);
+        height: 60vh;
         overflow: auto;
     }
+}
+.menu-list {
+    .run {
+        background-color: $primary;
+        color: white;
+    }
+    .view {
+        color: $primary;
+    }
+    .delete {
+        // background-color: red;
+        color: red;
+    }
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+.flex-grow {
+    flex-grow: 1;
+}
+.flex-shrink {
+    flex-grow: 0;
 }
 </style>

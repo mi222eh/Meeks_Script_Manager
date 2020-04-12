@@ -6,32 +6,20 @@ const routes: RouteConfig[] = [
         children: [
             { 
                 path: '', 
-                component: () => import('pages/Index.vue') 
+                component: () => import('pages/scripts/index.vue') 
             },
             {
                 path:'scripts',
                 component: () => import('pages/scripts/index.vue')
             },
             {
-                path:'scripts/view/:name',
+                path:'scripts/view/:id',
                 component: () => import('pages/scripts/view.vue')
             },
             {
                 path:'scripts/create',
                 component: () => import('pages/scripts/create.vue')
-            },
-            {
-                path:'groups',
-                component: () => import('pages/groups/index.vue')
-            },
-            {
-                path:'groups/view/:name',
-                component: () => import('pages/groups/view.vue')
-            },
-            {
-                path:'groups/create',
-                component: () => import('pages/groups/create.vue')
-            },
+            }
         ]
     }
 ];
