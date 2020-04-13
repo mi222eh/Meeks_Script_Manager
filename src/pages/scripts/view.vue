@@ -252,6 +252,9 @@ export default Vue.extend({
             if (file.canceled) {
                 return;
             }
+            if (!file.filePath) {
+                return;
+            }
             const script: ScriptObject = this.$store.getters[
                 'scriptManager/getScriptCopyById'
             ](this.scriptId);
@@ -263,17 +266,21 @@ export default Vue.extend({
     computed: {
         commandList: {
             get() {
+                // @ts-ignore
                 const script: ScriptObjectContainer = this.$store.getters[
                     'scriptManager/getScriptById'
+                    // @ts-ignore
                 ](this.scriptId);
-                console.log('Command List', script.script.commandList);
                 return script.script.commandList;
             },
             set(value: CommandObject[]) {
+                // @ts-ignore
                 const script: ScriptObject = this.$store.getters[
                     'scriptManager/getScriptCopyById'
+                    // @ts-ignore
                 ](this.scriptId);
                 script.commandList = value;
+                // @ts-ignore
                 this.$store.commit('scriptManager/updateScript', script);
             }
         },
@@ -285,15 +292,20 @@ export default Vue.extend({
         },
         scriptTitle: {
             get() {
+                // @ts-ignore
                 const script: ScriptObject = this.$store.getters[
                     'scriptManager/getScriptCopyById'
+                    // @ts-ignore
                 ](this.scriptId);
                 return script.title;
             },
-            set(value) {
+            set(value: string) {
+                // @ts-ignore
                 const script: ScriptObject = this.$store.getters[
                     'scriptManager/getScriptCopyById'
+                    // @ts-ignore
                 ](this.scriptId);
+
                 script.title = value;
                 this.$store.commit('scriptManager/updateScript', script);
             }
@@ -351,7 +363,7 @@ export default Vue.extend({
     }
     #Console {
         border: 1px black solid;
-        height: 60vh;
+        height: 54vh;
         overflow: auto;
     }
 }

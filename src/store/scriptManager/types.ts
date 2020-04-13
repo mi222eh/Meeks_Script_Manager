@@ -21,6 +21,7 @@ export enum ScriptManagerActionTypes{
 export interface ScriptObjectContainer{
     log: string[],
     isRunning: boolean,
+    runningScript?: number,
     script: ScriptObject,
 }
 

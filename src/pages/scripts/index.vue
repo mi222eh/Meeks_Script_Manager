@@ -83,7 +83,6 @@ export default Vue.extend({
             files.filePaths.forEach(async filePath => {
                 const script = await readJSON(filePath);
                 this.$store.dispatch('scriptManager/createScript', script);
-                console.log('file path', script);
             });
         },
         deleteScript(script: ScriptObjectContainer) {

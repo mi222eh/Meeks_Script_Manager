@@ -28,7 +28,12 @@ export async function executeScript(
     context.commit(ScriptManagerCommitTypes.CLEAR_SCRIPT_LOG, {
         id: scriptItem.script.id
     });
-    for (const command of scriptItem.script.commandList) {
+    let commandList = Array.from(scriptItem.script.commandList);
+    while(commandList.length > 0){
+        const command = commandList.shift();
+        if(!command){
+            break;
+        }
         const process = executor.runProcess({
             command: command.command,
             cwd: command.cwd
@@ -56,7 +61,7 @@ export async function executeScript(
                 id: scriptItem.script.id,
                 row: e.message || e
             });
-            break;
+            commandList = [];
         }
         finally{
             processMap[scriptItem.script.id] = null;
