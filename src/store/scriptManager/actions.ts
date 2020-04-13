@@ -40,13 +40,17 @@ export async function executeScript(
         });
         processMap[scriptItem.script.id] = process.process;
         process.process.stdout.on('data', chunk => {
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-                id: scriptItem.script.id,
-                row: chunk
-            });
+            const rows:string[] = chunk.toString().split('\n').filter((x:string) => !!x);
+            while(rows.length){
+                context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                    id: scriptItem.script.id,
+                    row: rows.shift()
+                });
+            }
         });
         try {
             const result = await process.promise();
+            console.log({result});
     
             context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
                 id: scriptItem.script.id,
@@ -57,6 +61,7 @@ export async function executeScript(
                 row: result.output
             });
         } catch (e) {
+            console.log({e});
             context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
                 id: scriptItem.script.id,
                 row: e.message || e
@@ -127,12 +132,9 @@ export async function removeScript(
 }
 
 export async function sendProcessInput(context: ScriptManagerContext, payload: {id: number, input:string}){
-    const process = processMap[payload.id];
-    if(!process){
+    const childProcess = processMap[payload.id];
+    if(!childProcess){
         return;
     }
-    // process.send(payload.input);
-    process.stdin.write(payload.input,function (...rest) {
-        console.log({rest});
-    })
+    childProcess.stdin.write(payload.input + '\n', 'UTF-8');
 }

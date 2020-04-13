@@ -44,18 +44,19 @@
                     <q-tab-panel name="console" class="flex-grow flex-column">
                         <div id="Console" ref="console" class="flex-grow">
                             <div
+                                class="row"
                                 v-for="(log, index) in scriptContainer.log"
                                 :key="`log${index}`"
                             >{{ log }}</div>
                         </div>
-                        <!-- <q-input
+                        <q-input
                             prefix=">"
                             square
                             dense
                             outlined
                             v-model="commandLine"
                             v-on:keyup.enter="sendCommandLine"
-                        />-->
+                        />
                     </q-tab-panel>
 
                     <q-tab-panel name="commands" class="flex-grow">
@@ -363,7 +364,7 @@ export default Vue.extend({
     }
     #Console {
         border: 1px black solid;
-        height: 54vh;
+        height: 47vh;
         overflow: auto;
     }
 }

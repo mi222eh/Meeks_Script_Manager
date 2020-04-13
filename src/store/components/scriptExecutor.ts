@@ -3,6 +3,7 @@ import { ChildProcess } from 'child_process';
 import {SubEvent} from 'sub-events';
 
 
+
 interface ScriptExecutorOptions{
     command:string,
     cwd: string | undefined,
@@ -19,29 +20,37 @@ interface ScriptExecutionObject{
 }
 
 export function runProcess(opts: ScriptExecutorOptions):ScriptExecutionObject{
-    const onError = new SubEvent<childProcess.ExecException>();
+    const onError = new SubEvent<Error>();
     const onSuccess = new SubEvent<{error:string, output:string}>();
+    let hasError = false;
 
-    const process = childProcess.exec(opts.command, {
-        cwd: opts.cwd
-    },(error, stdout, stderr) => {
-        if(error){
-            onError.emit(error);
+    const process = childProcess.spawn(opts.command, [''],{
+        cwd: opts.cwd,
+        shell: true,
+    });
+    process.on('error', function (error: Error) {
+        hasError = true;
+        onError.emit(error);
+    })
+    process.on('close', function(code){
+        if(hasError){
             return;
         }
         onSuccess.emit({
-            output: stdout,
-            error: stderr
-        })
+            error: '',
+            output: `Process exited with status code: ${code}`
+        });
+    });
+    
+    const promise: Promise<ScriptExecutorResult> = new Promise((resolve, reject) => {
+        onSuccess.subscribe(resolve);
+        onError.subscribe(reject);
     });
 
     return {
         process,
         promise(){
-            return new Promise((resolve, reject) => {
-                onSuccess.subscribe(resolve);
-                onError.subscribe(reject);
-            });
+            return promise;
         }
     }
 }
