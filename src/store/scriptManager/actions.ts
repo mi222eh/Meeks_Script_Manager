@@ -3,7 +3,8 @@ import * as executor from '../components/scriptExecutor';
 import {
     ScriptManagerContext,
     ScriptManagerCommitTypes,
-    ScriptObject} from './types';
+    ScriptObject,
+    LogRow} from './types';
 import { getScripts, saveScripts } from './DAL';
 import { ChildProcess } from 'child_process';
 
@@ -42,29 +43,50 @@ export async function executeScript(
         process.process.stdout.on('data', chunk => {
             const rows:string[] = chunk.toString().split('\n').filter((x:string) => !!x);
             while(rows.length){
+                const row:LogRow = {
+                    text: rows.shift() || '',
+                    type: 'output'
+                }
                 context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
                     id: scriptItem.script.id,
-                    row: rows.shift()
+                    row: row
+                });
+            }
+        });
+        process.process.stderr.on('data', chunk => {
+            const rows:string[] = chunk.toString().split('\n').filter((x:string) => !!x);
+            while(rows.length){
+                const row:LogRow = {
+                    text: rows.shift() || '',
+                    type: 'error'
+                }
+                context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
+                    id: scriptItem.script.id,
+                    row: row
                 });
             }
         });
         try {
             const result = await process.promise();
-            console.log({result});
-    
+            // console.log({result});
+
+            const log:LogRow = {
+                text: result.output,
+                type: 'success'
+            }
             context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
                 id: scriptItem.script.id,
-                row: result.error
-            });
-            context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
-                id: scriptItem.script.id,
-                row: result.output
+                row: log
             });
         } catch (e) {
             console.log({e});
+            const log:LogRow = {
+                text: e.message || e,
+                type: 'error'
+            }
             context.commit(ScriptManagerCommitTypes.ADD_ROW_TO_SCRIPT_LOG, {
                 id: scriptItem.script.id,
-                row: e.message || e
+                row: log
             });
             commandList = [];
         }

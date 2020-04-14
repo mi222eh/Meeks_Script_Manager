@@ -21,24 +21,20 @@ interface ScriptExecutionObject{
 
 export function runProcess(opts: ScriptExecutorOptions):ScriptExecutionObject{
     const onError = new SubEvent<Error>();
-    const onSuccess = new SubEvent<{error:string, output:string}>();
-    let hasError = false;
+    const onSuccess = new SubEvent<ScriptExecutorResult>();
 
     const process = childProcess.spawn(opts.command, [''],{
         cwd: opts.cwd,
         shell: true,
     });
-    process.on('error', function (error: Error) {
-        hasError = true;
-        onError.emit(error);
-    })
     process.on('close', function(code){
-        if(hasError){
+        if(code !== 0){
+            onError.emit(new Error(`Process exited with code: ${code}`));
             return;
         }
         onSuccess.emit({
             error: '',
-            output: `Process exited with status code: ${code}`
+            output: `Process exited with code: ${code}`
         });
     });
     

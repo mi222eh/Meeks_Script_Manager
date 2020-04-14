@@ -44,10 +44,10 @@
                     <q-tab-panel name="console" class="flex-grow flex-column">
                         <div id="Console" ref="console" class="flex-grow">
                             <div
-                                class="row"
                                 v-for="(log, index) in scriptContainer.log"
+                                :class="`row ${log.type}`"
                                 :key="`log${index}`"
-                            >{{ log }}</div>
+                            >{{ log.text }}</div>
                         </div>
                         <q-input
                             prefix=">"
@@ -367,6 +367,14 @@ export default Vue.extend({
         height: 47vh;
         overflow: auto;
     }
+}
+.row.error {
+    background: #ff001c36;
+    color: red;
+}
+.row.success {
+    background: #00800038;
+    color: #006d00;
 }
 .menu-list {
     .run {

@@ -19,10 +19,15 @@ export enum ScriptManagerActionTypes{
 }
 
 export interface ScriptObjectContainer{
-    log: string[],
+    log: LogRow[],
     isRunning: boolean,
     runningScript?: number,
     script: ScriptObject,
+}
+
+export interface LogRow{
+    text:string,
+    type: 'output' | 'error' | 'success'
 }
 
 export interface ScriptObject{

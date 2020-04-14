@@ -1,5 +1,5 @@
 import './state'
-import { ScriptManagerState, ScriptObject, ScriptObjectContainer} from './types';
+import { ScriptManagerState, ScriptObject, ScriptObjectContainer, LogRow} from './types';
 
 export function clearScriptLog(state: ScriptManagerState, payload:{id:number}){
     const script = state.scriptList.find(script => script.script.id === payload.id);
@@ -9,7 +9,7 @@ export function clearScriptLog(state: ScriptManagerState, payload:{id:number}){
     script.log = [];
 }
 
-export function addRowToScriptLog (state: ScriptManagerState, payload:{id:number, row:string}) {
+export function addRowToScriptLog (state: ScriptManagerState, payload:{id:number, row:LogRow}) {
     const script = state.scriptList.find(script => script.script.id === payload.id);
     if(!script){
         throw new Error('Script not found')
